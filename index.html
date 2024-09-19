@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Rock Paper Scissors</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body, html {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #f5f7fa, #c3cfe2);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            text-align: center;
+            max-width: 800px;
+            width: 90%;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.85);
+            border-radius: 15px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.3);
+            position: relative;
+        }
+
+        .start-screen, .game-screen, .result-screen {
+            display: none;
+        }
+
+        .active {
+            display: block;
+        }
+
+        h1 {
+            font-size: 3em;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .instructions {
+            font-size: 1.2em;
+            color: #555;
+        }
+
+        .choices {
+            display: flex;
+            justify-content: center;
+            margin: 30px 0;
+        }
+
+        .choice {
+            width: 100px;
+            height: 100px;
+            margin: 0 20px;
+            background: #fff;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2em;
+            cursor: pointer;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .choice:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        .choice.selected {
+            animation: pop 0.5s forwards;
+        }
+
+        @keyframes pop {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.5); }
+            100% { transform: scale(1); }
+        }
+
+        .result {
+            font-size: 2em;
+            margin-top: 20px;
+            color: #333;
+        }
+
+        .choices-display {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 20px;
+        }
+
+        .player, .computer {
+            width: 150px;
+            height: 150px;
+            margin: 0 50px;
+            background: #fff;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 4em;
+            position: relative;
+            opacity: 0;
+            animation: fadeIn 1s forwards;
+        }
+
+        .player::before, .computer::before {
+            content: attr(data-label);
+            position: absolute;
+            top: -30px;
+            font-size: 1em;
+            color: #555;
+        }
+
+        @keyframes fadeIn {
+            to { opacity: 1; }
+        }
+
+        .restart-instruction {
+            margin-top: 30px;
+            font-size: 1em;
+            color: #555;
+        }
+
+        @media (max-width: 600px) {
+            .choices {
+                flex-direction: column;
+            }
+
+            .choice {
+                margin: 10px 0;
+            }
+
+            .choices-display {
+                flex-direction: column;
+            }
+
+            .player, .computer {
+                margin: 20px 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Start Screen -->
+        <div class="start-screen active">
+            <h1>Rock Paper Scissors</h1>
+            <p class="instructions">Press <strong>Space</strong> to Start</p>
+        </div>
+
+        <!-- Game Screen -->
+        <div class="game-screen">
+            <h1>Choose Your Move</h1>
+            <div class="choices">
+                <div class="choice" data-choice="Rock">✊</div>
+                <div class="choice" data-choice="Paper">✋</div>
+                <div class="choice" data-choice="Scissors">✌️</div>
+            </div>
+        </div>
+
+        <!-- Result Screen -->
+        <div class="result-screen">
+            <h1>Result</h1>
+            <div class="choices-display">
+                <div class="player" data-label="You">✊</div>
+                <div class="computer" data-label="Computer">✋</div>
+            </div>
+            <div class="result">You Win!</div>
+            <p class="restart-instruction">Press <strong>Space</strong> to Restart</p>
+        </div>
+    </div>
+
+    <script>
+        const startScreen = document.querySelector('.start-screen');
+        const gameScreen = document.querySelector('.game-screen');
+        const resultScreen = document.querySelector('.result-screen');
+        const choices = document.querySelectorAll('.choice');
+        const playerChoiceDisplay = document.querySelector('.player');
+        const computerChoiceDisplay = document.querySelector('.computer');
+        const resultDisplay = document.querySelector('.result');
+        let userChoice = '';
+        let computerChoice = '';
+        const choicesArr = ['Rock', 'Paper', 'Scissors'];
+
+        // Function to show a screen
+        function showScreen(screen) {
+            startScreen.classList.remove('active');
+            gameScreen.classList.remove('active');
+            resultScreen.classList.remove('active');
+            screen.classList.add('active');
+        }
+
+        // Function to start the game
+        function startGame() {
+            showScreen(gameScreen);
+        }
+
+        // Function to restart the game
+        function restartGame() {
+            showScreen(startScreen);
+            resetChoices();
+        }
+
+        // Function to reset choices
+        function resetChoices() {
+            playerChoiceDisplay.style.opacity = 0;
+            computerChoiceDisplay.style.opacity = 0;
+            resultDisplay.textContent = '';
+            choices.forEach(choice => {
+                choice.classList.remove('selected');
+            });
+        }
+
+        // Function to handle user choice
+        function handleChoice(e) {
+            userChoice = e.currentTarget.getAttribute('data-choice');
+            e.currentTarget.classList.add('selected');
+            computerChoice = choicesArr[Math.floor(Math.random() * 3)];
+            displayChoices();
+            determineWinner();
+            showScreen(resultScreen);
+        }
+
+        // Function to display choices with animation
+        function displayChoices() {
+            playerChoiceDisplay.textContent = getEmoji(userChoice);
+            computerChoiceDisplay.textContent = getEmoji(computerChoice);
+            playerChoiceDisplay.style.opacity = 1;
+            computerChoiceDisplay.style.opacity = 1;
+        }
+
+        // Function to get emoji based on choice
+        function getEmoji(choice) {
+            switch(choice) {
+                case 'Rock': return '✊';
+                case 'Paper': return '✋';
+                case 'Scissors': return '✌️';
+            }
+        }
+
+        // Function to determine the winner
+        function determineWinner() {
+            if (userChoice === computerChoice) {
+                resultDisplay.textContent = "It's a Draw!";
+            } else if (
+                (userChoice === 'Rock' && computerChoice === 'Scissors') ||
+                (userChoice === 'Paper' && computerChoice === 'Rock') ||
+                (userChoice === 'Scissors' && computerChoice === 'Paper')
+            ) {
+                resultDisplay.textContent = "You Win!";
+            } else {
+                resultDisplay.textContent = "You Lose!";
+            }
+        }
+
+        // Event listeners for choices
+        choices.forEach(choice => {
+            choice.addEventListener('click', handleChoice);
+        });
+
+        // Event listener for spacebar
+        document.addEventListener('keydown', (e) => {
+            if (e.code === 'Space') {
+                if (startScreen.classList.contains('active')) {
+                    startGame();
+                } else if (resultScreen.classList.contains('active')) {
+                    restartGame();
+                }
+            }
+        });
+    </script>
+</body>
+</html>
